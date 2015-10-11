@@ -8,7 +8,7 @@ pub struct Uniform<T> (marker::PhantomData<fn() -> T>);
 
 impl <T> Uniform<T> where Uniform<T>: Distribution<T> {
     #[inline]
-    fn new() -> Uniform<T> {
+    pub fn new() -> Uniform<T> {
         Uniform(marker::PhantomData)
     }
 }
@@ -81,29 +81,23 @@ impl Distribution<bool> for Uniform<bool> {
 }
 
 macro_rules! default_distribution_is_uniform {
-    ($ty:ty) => {
-        impl DefaultDistribution for $ty {
-            type Distribution = Uniform<Self>;
+    ($($ty:ty),* ) => {
+        $(
+            impl DefaultDistribution for $ty {
+                type Distribution = Uniform<Self>;
 
-            #[inline]
-            fn default_distribution() -> Uniform<Self> {
-                Uniform::new()
+                #[inline]
+                fn default_distribution() -> Uniform<Self> {
+                    Uniform::new()
+                }
             }
-        }
+        )*
     }
 }
 
-default_distribution_is_uniform! { isize }
-default_distribution_is_uniform! { i8 }
-default_distribution_is_uniform! { i16 }
-default_distribution_is_uniform! { i32 }
-default_distribution_is_uniform! { i64 }
-default_distribution_is_uniform! { usize }
-default_distribution_is_uniform! { u8 }
-default_distribution_is_uniform! { u16 }
-default_distribution_is_uniform! { u32 }
-default_distribution_is_uniform! { u64 }
-default_distribution_is_uniform! { bool }
+default_distribution_is_uniform! { isize, i8, i16, i32, i64,
+                                   usize, u8, u16, u32, u64,
+                                   bool }
 
 #[cfg(test)]
 mod tests {
@@ -125,7 +119,7 @@ mod tests {
     fn test_range_full_into_distribution() {
         let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
 
-        let d: Uniform<u8> = RangeFull.into_distribution();
+        let d: Uniform<u8> = (..).into_distribution();
         let _: u8 = d.sample(&mut rng);
     }
 }
