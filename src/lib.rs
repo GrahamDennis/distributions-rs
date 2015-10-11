@@ -10,7 +10,12 @@ pub use impls::{Constant};
 pub mod uniform;
 pub mod uniform_range;
 
-#[test]
-fn it_works() {
-    //u8::default_distribution();
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_u8_default_distribution() {
+        u8::default_distribution();
+    }
 }
