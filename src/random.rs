@@ -24,6 +24,13 @@ pub trait RandomSimple {
 
 pub struct RandomSimpleDistribution<T>(marker::PhantomData<fn() -> T>);
 
+impl <T> RandomSimpleDistribution<T> where T: RandomSimple {
+    #[inline]
+    pub fn new() -> RandomSimpleDistribution<T> {
+        RandomSimpleDistribution(marker::PhantomData)
+    }
+}
+
 impl <T: RandomSimple> Distribution<T> for RandomSimpleDistribution<T> {
     #[inline]
     fn sample<R: Rng>(&self, rng: &mut R) -> T {
@@ -31,13 +38,16 @@ impl <T: RandomSimple> Distribution<T> for RandomSimpleDistribution<T> {
     }
 }
 
-impl <T: RandomSimple> DefaultDistribution for T
-{
-    type Distribution = RandomSimpleDistribution<T>;
+macro_rules! random_simple_to_default_distribution {
+    ($ty:ty) => {
+        impl DefaultDistribution for $ty {
+            type Distribution = RandomSimpleDistribution<$ty>;
 
-    #[inline]
-    fn default_distribution() -> <Self as DefaultDistribution>::Distribution {
-        RandomSimpleDistribution(marker::PhantomData)
+            #[inline]
+            fn default_distribution() -> RandomSimpleDistribution<$ty> {
+                RandomSimpleDistribution::new()
+            }
+        }
     }
 }
 
@@ -54,6 +64,8 @@ mod tests {
             MyType(0)
         }
     }
+
+    random_simple_to_default_distribution! { MyType }
 
     #[test]
     fn test_generate_u8() {

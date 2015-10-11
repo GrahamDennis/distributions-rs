@@ -7,7 +7,7 @@ mod impls;
 pub use api::{Distribution, DefaultDistribution, IntoDistribution};
 pub use random::{Random, RandomSimple, RandomSimpleDistribution};
 pub use impls::{Constant};
-//pub mod uniform;
+pub mod uniform;
 
 #[test]
 fn it_works() {

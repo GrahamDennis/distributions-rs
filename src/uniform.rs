@@ -1,25 +1,131 @@
+use api::{Distribution, DefaultDistribution, IntoDistribution};
 
-use api::{IntoDistribution, DefaultDistribution};
+use std::ops::{RangeFull};
+use std::marker;
+use rand::Rng;
 
-use num::{Bounded, Integer};
-use std::ops::{RangeFull, Range, RangeFrom, RangeTo, Add, Sub};
+pub struct Uniform<T> (marker::PhantomData<fn() -> T>);
 
-pub struct Uniform<T>(marker::PhantomData<fn() -> T>);
-
-impl <T: Integer + Bounded + DefaultDistribution> IntoDistribution<X> for RangeFull {
-    type Distribution = Uniform<T>;
-
-    fn into_distribution(self) -> Uniform<T> {
-        X::default_distribution()
+impl <T> Uniform<T> where Uniform<T>: Distribution<T> {
+    #[inline]
+    fn new() -> Uniform<T> {
+        Uniform(marker::PhantomData)
     }
 }
 
+impl <T> IntoDistribution<T> for RangeFull where Uniform<T>: Distribution<T> {
+    type Distribution = Uniform<T>;
+
+    #[inline]
+    fn into_distribution(self) -> Uniform<T> {
+        Uniform::new()
+    }
+}
+
+macro_rules! integer_size_impls {
+    ($mod_name:ident, $ty:ty, $ty32:ty, $ty64:ty) => {
+        mod $mod_name {
+            use rand::Rng;
+            use api::Distribution;
+            use std::mem;
+            use super::Uniform;
+
+            impl Distribution<$ty> for Uniform<$ty> {
+                #[inline]
+                fn sample<R: Rng>(&self, rng: &mut R) -> $ty {
+                    if mem::size_of::<$ty>() == 4 {
+                        Uniform::<$ty32>::new().sample(rng) as $ty
+                    } else {
+                        Uniform::<$ty64>::new().sample(rng) as $ty
+                    }
+                }
+            }
+        }
+    }
+}
+
+integer_size_impls! { isize_uniform_impls, isize, i32, i64 }
+integer_size_impls! { usize_uniform_impls, usize, u32, u64 }
+
+macro_rules! integer_impls {
+    ($mod_name:ident, $ty:ty, $method_name:ident) => {
+        mod $mod_name {
+            use rand::Rng;
+            use api::Distribution;
+            use super::Uniform;
+
+            impl Distribution<$ty> for Uniform<$ty> {
+                #[inline]
+                fn sample<R: Rng>(&self, rng: &mut R) -> $ty {
+                    rng.$method_name() as $ty
+                }
+            }
+        }
+    }
+}
+
+integer_impls! { i8_uniform_impls,  i8,  next_u32 }
+integer_impls! { i16_uniform_impls, i16, next_u32 }
+integer_impls! { i32_uniform_impls, i32, next_u32 }
+integer_impls! { i64_uniform_impls, i64, next_u64 }
+integer_impls! { u8_uniform_impls,  u8,  next_u32 }
+integer_impls! { u16_uniform_impls, u16, next_u32 }
+integer_impls! { u32_uniform_impls, u32, next_u32 }
+integer_impls! { u64_uniform_impls, u64, next_u64 }
+
+impl Distribution<bool> for Uniform<bool> {
+    #[inline]
+    fn sample<R: Rng>(&self, rng: &mut R) -> bool {
+        Uniform::<u8>::new().sample(rng) & 1 == 1
+    }
+}
+
+macro_rules! default_distribution_is_uniform {
+    ($ty:ty) => {
+        impl DefaultDistribution for $ty {
+            type Distribution = Uniform<Self>;
+
+            #[inline]
+            fn default_distribution() -> Uniform<Self> {
+                Uniform::new()
+            }
+        }
+    }
+}
+
+default_distribution_is_uniform! { isize }
+default_distribution_is_uniform! { i8 }
+default_distribution_is_uniform! { i16 }
+default_distribution_is_uniform! { i32 }
+default_distribution_is_uniform! { i64 }
+default_distribution_is_uniform! { usize }
+default_distribution_is_uniform! { u8 }
+default_distribution_is_uniform! { u16 }
+default_distribution_is_uniform! { u32 }
+default_distribution_is_uniform! { u64 }
+default_distribution_is_uniform! { bool }
+
 #[cfg(test)]
-use rand::{self, thread_rng, Rng};
+mod tests {
+    use super::*;
 
-#[test]
-fn test_generate_u8() {
-    let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+    use api::{Distribution, IntoDistribution};
 
-    let _: u8 = RangeFull.sample(&mut rng);
+    use rand::{self, thread_rng, Rng};
+    use std::ops::{RangeFull};
+
+    #[test]
+    fn test_generate_u8() {
+        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+
+        let _: u8 = RangeFull.sample(&mut rng);
+    }
+
+    #[test]
+    fn test_range_full_into_distribution() {
+        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+
+        let d: Uniform<u8> = RangeFull.into_distribution();
+        let _: u8 = d.sample(&mut rng);
+    }
 }
