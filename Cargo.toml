@@ -1,0 +1,8 @@
+[package]
+name = "distributions"
+version = "0.1.0"
+authors = ["Graham Dennis <graham.dennis@gmail.com>"]
+
+[dependencies]
+rand = "*"
+num = "*"
