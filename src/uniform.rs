@@ -1,4 +1,4 @@
-use api::{Distribution, DefaultDistribution, IntoDistribution};
+use core::{Distribution, DefaultDistribution, IntoDistribution};
 
 use std::ops::{RangeFull};
 use std::marker;
@@ -6,14 +6,14 @@ use rand::Rng;
 
 pub struct Uniform<T> (marker::PhantomData<fn() -> T>);
 
-impl <T> Uniform<T> where Uniform<T>: Distribution<T> {
+impl <T> Uniform<T> where Uniform<T>: Distribution<Output=T> {
     #[inline]
     pub fn new() -> Uniform<T> {
         Uniform(marker::PhantomData)
     }
 }
 
-impl <T> IntoDistribution<T> for RangeFull where Uniform<T>: Distribution<T> {
+impl <T> IntoDistribution<T> for RangeFull where Uniform<T>: Distribution<Output=T> {
     type Distribution = Uniform<T>;
 
     #[inline]
@@ -26,11 +26,13 @@ macro_rules! integer_size_impls {
     ($mod_name:ident, $ty:ty, $ty32:ty, $ty64:ty) => {
         mod $mod_name {
             use rand::Rng;
-            use api::Distribution;
+            use core::Distribution;
             use std::mem;
             use super::Uniform;
 
-            impl Distribution<$ty> for Uniform<$ty> {
+            impl Distribution for Uniform<$ty> {
+                type Output = $ty;
+
                 #[inline]
                 fn sample<R: Rng>(&self, rng: &mut R) -> $ty {
                     if mem::size_of::<$ty>() == 4 {
@@ -51,10 +53,12 @@ macro_rules! integer_impls {
     ($mod_name:ident, $ty:ty, $method_name:ident) => {
         mod $mod_name {
             use rand::Rng;
-            use api::Distribution;
+            use core::Distribution;
             use super::Uniform;
 
-            impl Distribution<$ty> for Uniform<$ty> {
+            impl Distribution for Uniform<$ty> {
+                type Output = $ty;
+
                 #[inline]
                 fn sample<R: Rng>(&self, rng: &mut R) -> $ty {
                     rng.$method_name() as $ty
@@ -73,7 +77,9 @@ integer_impls! { u16_uniform_impls, u16, next_u32 }
 integer_impls! { u32_uniform_impls, u32, next_u32 }
 integer_impls! { u64_uniform_impls, u64, next_u64 }
 
-impl Distribution<bool> for Uniform<bool> {
+impl Distribution for Uniform<bool> {
+    type Output = bool;
+
     #[inline]
     fn sample<R: Rng>(&self, rng: &mut R) -> bool {
         Uniform::<u8>::new().sample(rng) & 1 == 1
@@ -103,7 +109,7 @@ default_distribution_is_uniform! { isize, i8, i16, i32, i64,
 mod tests {
     use super::*;
 
-    use api::{Distribution, IntoDistribution};
+    use core::{Distribution, IntoDistribution};
 
     use rand::{self, thread_rng, Rng};
     use std::ops::{RangeFull};

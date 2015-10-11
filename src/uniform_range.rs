@@ -1,4 +1,4 @@
-use api::{Distribution, IntoDistribution};
+use core::{Distribution, IntoDistribution};
 use uniform::Uniform;
 
 use std::ops::{Range};
@@ -13,7 +13,7 @@ pub struct UniformIntegerRange<T> {
 }
 
 impl <X: Integer + Bounded + Copy> UniformIntegerRange<X> where
-    Uniform<X>: Distribution<X>
+    Uniform<X>: Distribution<Output=X>
 {
     #[inline]
     pub fn new(low: X, high: X) -> UniformIntegerRange<X> {
@@ -32,7 +32,7 @@ impl <X: Integer + Bounded + Copy> UniformIntegerRange<X> where
 }
 
 impl <X: Integer + Bounded + Copy> IntoDistribution<X> for Range<X> where
-    Uniform<X>: Distribution<X>
+    Uniform<X>: Distribution<Output=X>
 {
     type Distribution = UniformIntegerRange<X>;
 
@@ -42,9 +42,11 @@ impl <X: Integer + Bounded + Copy> IntoDistribution<X> for Range<X> where
     }
 }
 
-impl <X: Integer + Copy> Distribution<X> for UniformIntegerRange<X> where
-    Uniform<X>: Distribution<X>
+impl <X: Integer + Copy> Distribution for UniformIntegerRange<X> where
+    Uniform<X>: Distribution<Output=X>
 {
+    type Output = X;
+
     #[inline]
     fn sample<R: Rng>(&self, rng: &mut R) -> X {
         loop {
@@ -60,7 +62,7 @@ impl <X: Integer + Copy> Distribution<X> for UniformIntegerRange<X> where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use api::{Distribution, IntoDistribution};
+    use core::{Distribution, IntoDistribution};
 
     use rand::{self, thread_rng, Rng};
 

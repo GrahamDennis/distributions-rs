@@ -1,4 +1,4 @@
-use api::{DefaultDistribution, Distribution};
+use core::{DefaultDistribution, Distribution};
 use rand::Rng;
 use std::marker;
 
@@ -31,7 +31,9 @@ impl <T> RandomSimpleDistribution<T> where T: RandomSimple {
     }
 }
 
-impl <T: RandomSimple> Distribution<T> for RandomSimpleDistribution<T> {
+impl <T: RandomSimple> Distribution for RandomSimpleDistribution<T> {
+    type Output = T;
+
     #[inline]
     fn sample<R: Rng>(&self, rng: &mut R) -> T {
         <T as RandomSimple>::random(rng)
@@ -55,7 +57,7 @@ macro_rules! random_simple_to_default_distribution {
 mod tests {
     use super::*;
     use rand::{self, thread_rng, Rng};
-    use api::{Distribution, DefaultDistribution};
+    use core::{Distribution, DefaultDistribution};
 
     struct MyType(u8);
 
