@@ -24,9 +24,7 @@ pub trait RandomSimple {
 
 pub struct RandomSimpleDistribution<T>(marker::PhantomData<fn() -> T>);
 
-impl <T: RandomSimple> Distribution for RandomSimpleDistribution<T> {
-    type Output = T;
-
+impl <T: RandomSimple> Distribution<T> for RandomSimpleDistribution<T> {
     #[inline]
     fn sample<R: Rng>(&self, rng: &mut R) -> T {
         <T as RandomSimple>::random(rng)

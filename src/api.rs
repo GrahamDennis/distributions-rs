@@ -1,16 +1,14 @@
 use rand::Rng;
 
-/// Type that can be used to create a random instance of `Output`.
+/// Type that can be used to create a random instance of `T`.
 ///
 /// Since no state is recorded, each sample is (statistically)
 /// independent of all others, assuming the `Rng` used has this
 /// property.
-pub trait Distribution {
-    /// The type that this trait is produced by sampling from this distribution.
-    type Output;
-    /// Generate a random value of `Output`, using `rng` as the
+pub trait Distribution<T> {
+    /// Generate a random value of `T`, using `rng` as the
     /// source of randomness.
-    fn sample<R: Rng>(&self, rng: &mut R) -> <Self as Distribution>::Output;
+    fn sample<R: Rng>(&self, rng: &mut R) -> T;
 }
 
 /// Data types that have a default distribution for generating random values.
@@ -18,7 +16,7 @@ pub trait Distribution {
 /// For example for integers, the default distribution is a uniform distribution over all possible
 /// values.
 pub trait DefaultDistribution {
-    type Distribution: Distribution<Output=Self>;
+    type Distribution: Distribution<Self>;
 
     fn default_distribution() -> <Self as DefaultDistribution>::Distribution;
 }
@@ -30,7 +28,7 @@ pub trait DefaultDistribution {
 /// that distribution.  This is so that `gen(&mut rng, ..) -> T` will work without additional type
 /// annotations for the distribution.
 pub trait IntoDistribution<T>: Sized {
-    type Distribution: Distribution<Output=T>;
+    type Distribution: Distribution<T>;
 
     fn into_distribution(self) -> <Self as IntoDistribution<T>>::Distribution;
 

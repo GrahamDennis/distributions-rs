@@ -19,9 +19,7 @@ use rand::Rng;
 /// ```
 pub struct Constant<T>(pub T);
 
-impl<T: Clone> Distribution for Constant<T> {
-    type Output = T;
-
+impl<T: Clone> Distribution<T> for Constant<T> {
     #[inline]
     fn sample<R: Rng>(&self, _: &mut R) -> T {
         self.0.clone()

@@ -6,8 +6,6 @@ use std::ops::{RangeFull, Range, RangeFrom, RangeTo, Add, Sub};
 
 pub struct Uniform<T>(marker::PhantomData<fn() -> T>);
 
-
-
 impl <T: Integer + Bounded + DefaultDistribution> IntoDistribution<X> for RangeFull {
     type Distribution = Uniform<T>;
 
