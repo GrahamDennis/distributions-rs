@@ -130,10 +130,18 @@ mod tests {
     }
 
     #[test]
+    fn test_generate_u8_with_type_annotation() {
+        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+
+        let d = IntoDistribution::<u8>::into_distribution(RangeFull);
+        let _ = d.sample(&mut rng);
+    }
+
+    #[test]
     fn test_range_full_into_distribution() {
         let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
 
         let d: Uniform<u8> = (..).into_distribution();
-        let _: u8 = d.sample(&mut rng);
+        let _ = d.sample(&mut rng);
     }
 }
