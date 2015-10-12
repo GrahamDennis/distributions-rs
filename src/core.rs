@@ -7,8 +7,7 @@ use rand::Rng;
 /// property.
 pub trait Distribution {
     type Output;
-
-    /// Generate a random value of `T`, using `rng` as the
+    /// Generate a random value of `Output`, using `rng` as the
     /// source of randomness.
     fn sample<R: Rng>(&self, rng: &mut R) -> <Self as Distribution>::Output;
 }
@@ -33,8 +32,37 @@ pub trait IntoDistribution<T>: Sized {
     type Distribution: Distribution<Output=T>;
 
     fn into_distribution(self) -> <Self as IntoDistribution<T>>::Distribution;
+}
 
-    fn sample<R: Rng>(self, rng: &mut R) -> T {
-        self.into_distribution().sample(rng)
+impl <D, T> IntoDistribution<T> for D where
+    D: Distribution<Output=T>
+{
+    type Distribution = D;
+
+    #[inline]
+    fn into_distribution(self) -> D {
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use rand::Rng;
+
+    struct MyDistribution;
+
+    impl Distribution for MyDistribution {
+        type Output = u8;
+
+        fn sample<R: Rng>(&self, _: &mut R) -> u8 {
+            42
+        }
+    }
+
+    #[test]
+    fn test_distribution_into_distribution() {
+        MyDistribution.into_distribution();
     }
 }

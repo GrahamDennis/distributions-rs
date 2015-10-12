@@ -13,11 +13,13 @@ impl <T> Uniform<T> where Uniform<T>: Distribution<Output=T> {
     }
 }
 
-impl <T> IntoDistribution<T> for RangeFull where Uniform<T>: Distribution<Output=T> {
-    type Distribution = Uniform<T>;
+impl <X> IntoDistribution<X> for RangeFull where
+    Uniform<X>: Distribution<Output=X>
+{
+    type Distribution = Uniform<X>;
 
     #[inline]
-    fn into_distribution(self) -> Uniform<T> {
+    fn into_distribution(self) -> Uniform<X> {
         Uniform::new()
     }
 }
@@ -25,10 +27,11 @@ impl <T> IntoDistribution<T> for RangeFull where Uniform<T>: Distribution<Output
 macro_rules! integer_size_impls {
     ($mod_name:ident, $ty:ty, $ty32:ty, $ty64:ty) => {
         mod $mod_name {
-            use rand::Rng;
-            use core::Distribution;
-            use std::mem;
             use super::Uniform;
+            use core::Distribution;
+
+            use std::mem;
+            use rand::Rng;
 
             impl Distribution for Uniform<$ty> {
                 type Output = $ty;
@@ -52,9 +55,10 @@ integer_size_impls! { usize_uniform_impls, usize, u32, u64 }
 macro_rules! integer_impls {
     ($mod_name:ident, $ty:ty, $method_name:ident) => {
         mod $mod_name {
-            use rand::Rng;
-            use core::Distribution;
             use super::Uniform;
+            use core::Distribution;
+
+            use rand::Rng;
 
             impl Distribution for Uniform<$ty> {
                 type Output = $ty;
@@ -118,7 +122,11 @@ mod tests {
     fn test_generate_u8() {
         let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
 
-        let _: u8 = RangeFull.sample(&mut rng);
+        fn foo<D: IntoDistribution<T>, T, R: Rng>(d: D, rng: &mut R) -> T {
+            d.into_distribution().sample(rng)
+        }
+
+        let _: u8 = foo(RangeFull, &mut rng);
     }
 
     #[test]

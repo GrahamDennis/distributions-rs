@@ -20,7 +20,7 @@ use rand::Rng;
 pub struct Constant<T>(pub T);
 
 impl<T: Clone> Distribution for Constant<T> {
-    type Output = T;
+    type Output=T;
 
     #[inline]
     fn sample<R: Rng>(&self, _: &mut R) -> T {
@@ -29,12 +29,17 @@ impl<T: Clone> Distribution for Constant<T> {
 }
 
 #[cfg(test)]
-use rand::{self, thread_rng};
+mod tests {
+    use super::*;
 
-#[test]
-fn test_generate_u8() {
-    let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+    use core::Distribution;
+    use rand::{self, Rng, thread_rng};
 
-    let v: u8 =  Constant(42).sample(&mut rng);
-    assert_eq!(v, 42);
+    #[test]
+    fn test_generate_u8() {
+        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+
+        let v: u8 =  Constant(42).sample(&mut rng);
+        assert_eq!(v, 42);
+    }
 }
