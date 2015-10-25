@@ -105,9 +105,13 @@ mod tests {
     use rand::{self, thread_rng, Rng};
     use std::ops::{RangeFull};
 
+    fn create_rng() -> rand::XorShiftRng {
+        rand::thread_rng().gen()
+    }
+
     #[test]
     fn test_generate_u8() {
-        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+        let mut rng = create_rng();
 
         fn foo<D: IntoDistribution<T>, T, R: Rng>(d: D, rng: &mut R) -> T {
             d.into_distribution().sample(rng)
@@ -118,7 +122,7 @@ mod tests {
 
     #[test]
     fn test_generate_u8_with_type_annotation() {
-        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+        let mut rng = create_rng();
 
         let d = IntoDistribution::<u8>::into_distribution(RangeFull);
         let _: u8 = d.sample(&mut rng);
@@ -126,7 +130,7 @@ mod tests {
 
     #[test]
     fn test_range_full_into_distribution() {
-        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+        let mut rng = create_rng();
 
         let d: Uniform<u8> = (..).into_distribution();
         let _: u8 = d.sample(&mut rng);
