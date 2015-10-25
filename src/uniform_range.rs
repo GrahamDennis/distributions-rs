@@ -1,40 +1,48 @@
 use core::{Distribution, IntoDistribution};
 use uniform::Uniform;
 
-use std::ops::{Range};
+use std::ops::{Range, Add, Sub};
 use std::num::Wrapping as w;
 use rand::Rng;
-use num::{Bounded, Integer};
+use num::{Bounded, PrimInt};
 
-pub trait CreateRange: Integer {
-    type Unsigned;
+trait PrimitiveInteger: PrimInt {
+    type Unsigned : PrimitiveInteger;
+
+    fn to_unsigned(self) -> <Self as PrimitiveInteger>::Unsigned;
+    fn from_unsigned(u: <Self as PrimitiveInteger>::Unsigned) -> Self;
 }
 
-pub trait UniformPrimitiveIntegerRangeTrait<T: CreateRange> {
-    fn new(low: T, high: T) -> UniformPrimitiveIntegerRange<T>;
-    fn sample<R: Rng>(d: &UniformPrimitiveIntegerRange<T>, rng: &mut R) -> T;
-}
-
-pub struct UniformPrimitiveIntegerRange<T: CreateRange> {
+pub struct UniformPrimitiveIntegerRange<T> {
     low: T,
-    range: T::Unsigned,
-    accept_zone: T::Unsigned,
-    base_distribution: Uniform<T::Unsigned>
+    range: T,
+    accept_zone: T,
+    base_distribution: Uniform<T>
 }
 
-impl <T: CreateRange> UniformPrimitiveIntegerRange<T> where
-    UniformPrimitiveIntegerRange<T>: UniformPrimitiveIntegerRangeTrait<T>
+impl <T: PrimitiveInteger> UniformPrimitiveIntegerRange<T> where
+    w<T::Unsigned>: Sub<Output=w<T::Unsigned>> + Add<Output=w<T::Unsigned>>,
+    Uniform<T>: Distribution<Output=T>
 {
     #[inline]
     fn new(low: T, high: T) -> UniformPrimitiveIntegerRange<T> {
         assert!(low < high);
-        <Self as UniformPrimitiveIntegerRangeTrait<T>>::new(low, high)
+        let unsigned_range = (w(high.to_unsigned()) - w(low.to_unsigned())).0;
+        let unsigned_max: T::Unsigned = Bounded::max_value();
+        let unsigned_zone = unsigned_max - (unsigned_max % unsigned_range);
+
+        UniformPrimitiveIntegerRange {
+            low: low,
+            range: T::from_unsigned(unsigned_range),
+            accept_zone: T::from_unsigned(unsigned_zone),
+            base_distribution: Uniform::new()
+        }
     }
 }
 
-impl <T> IntoDistribution<T> for Range<T> where
-    T: CreateRange,
-    UniformPrimitiveIntegerRange<T>: Distribution<Output=T> + UniformPrimitiveIntegerRangeTrait<T>
+impl <T: PrimitiveInteger> IntoDistribution<T> for Range<T> where
+    w<T::Unsigned>: Sub<Output=w<T::Unsigned>> + Add<Output=w<T::Unsigned>>,
+    Uniform<T>: Distribution<Output=T>
 {
     type Distribution = UniformPrimitiveIntegerRange<T>;
 
@@ -44,59 +52,55 @@ impl <T> IntoDistribution<T> for Range<T> where
     }
 }
 
-impl <T> Distribution for UniformPrimitiveIntegerRange<T> where
-    T: CreateRange,
-    UniformPrimitiveIntegerRange<T>: UniformPrimitiveIntegerRangeTrait<T>
+impl <T: PrimitiveInteger> Distribution for UniformPrimitiveIntegerRange<T> where
+    w<T::Unsigned>: Sub<Output=w<T::Unsigned>> + Add<Output=w<T::Unsigned>>,
+    Uniform<T>: Distribution<Output=T>
 {
     type Output = T;
 
     #[inline]
     fn sample<R: Rng>(&self, rng: &mut R) -> T {
-        <Self as UniformPrimitiveIntegerRangeTrait<T>>::sample(self, rng)
+        loop {
+            let v = self.base_distribution.sample(rng).to_unsigned();
+
+            if v < (self.accept_zone.to_unsigned()) {
+                return T::from_unsigned((
+                    w(self.low.to_unsigned()) +
+                    w(v % self.range.to_unsigned())
+                ).0);
+            }
+        }
     }
 }
 
 macro_rules! uniform_integer_range_impls {
     ($(($ty:ty, $tyUnsigned:ty)),*) => {
         $(
-            impl CreateRange for $ty {
+            impl PrimitiveInteger for $ty {
                 type Unsigned = $tyUnsigned;
-            }
 
-            impl UniformPrimitiveIntegerRangeTrait<$ty> for UniformPrimitiveIntegerRange<$ty> {
                 #[inline]
-                fn new(low: $ty, high: $ty) -> UniformPrimitiveIntegerRange<$ty> {
-                    let unsigned_range = (w(high as $tyUnsigned) - w(low as $tyUnsigned)).0;
-                    let unsigned_max: $tyUnsigned = Bounded::max_value();
-                    let unsigned_zone = unsigned_max - (unsigned_max % unsigned_range);
-
-                    UniformPrimitiveIntegerRange {
-                        low: low,
-                        range: unsigned_range,
-                        accept_zone: unsigned_zone,
-                        base_distribution: Uniform::new()
-                    }
+                fn to_unsigned(self) -> $tyUnsigned {
+                    self as $tyUnsigned
                 }
 
                 #[inline]
-                fn sample<R: Rng>(d: &UniformPrimitiveIntegerRange<$ty>, rng: &mut R) -> $ty {
-                    loop {
-                        let v: $tyUnsigned = d.base_distribution.sample(rng);
-
-                        if v < d.accept_zone {
-                            return (w(d.low) + w((v % d.range) as $ty)).0;
-                        }
-                    }
+                fn from_unsigned(u: $tyUnsigned) -> Self {
+                    u as $ty
                 }
-
             }
         )*
     }
 }
 
 macro_rules! signed_and_unsigned_range_impls {
-    ($(($ty:ty, $tyUnsigned:ty)),*) => {
-        uniform_integer_range_impls! { $(($ty, $tyUnsigned), ($tyUnsigned, $tyUnsigned)),* }
+    ($(($tySigned:ty, $tyUnsigned:ty)),*) => {
+        uniform_integer_range_impls! {
+            $(
+                ($tySigned, $tyUnsigned),
+                ($tyUnsigned, $tyUnsigned)
+            ),*
+        }
     }
 }
 
