@@ -12,6 +12,17 @@ pub trait Distribution {
     fn sample<R: Rng>(&self, rng: &mut R) -> <Self as Distribution>::Output;
 }
 
+// An impl for a reference to a distribution because 'gen' and 'gen_iter' above consume
+// distributions.  This way you can pass a reference to a distribution to 'gen' and 'gen_iter'.
+impl <'a, D> Distribution for &'a D where D: Distribution {
+    type Output = <D as Distribution>::Output;
+
+    #[inline]
+    fn sample<R: Rng>(&self, rng: &mut R) -> <Self as Distribution>::Output {
+        (*self).sample(rng)
+    }
+}
+
 /// Data types that have a default distribution for generating random values.
 ///
 /// For example for integers, the default distribution is a uniform distribution over all possible

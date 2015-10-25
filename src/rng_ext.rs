@@ -42,14 +42,28 @@ impl <R: Rng> RngExt for R {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uniform::Uniform;
 
     use rand::{self, thread_rng, Rng};
 
+    fn create_rng() -> rand::XorShiftRng {
+        rand::thread_rng().gen()
+    }
+
     #[test]
     fn test_generate_u8() {
-        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+        let mut rng = create_rng();
 
         let _ : u8 = rng.generate(1..10);
         let _ : u8 = rng.generate(..);
+    }
+
+    #[test]
+    fn test_generate_from_distribution() {
+        let mut rng = create_rng();
+
+        let d = Uniform::<u8>::new();
+        let _: u8 = rng.generate(&d);
+        let _: u8 = rng.generate(&d);
     }
 }
