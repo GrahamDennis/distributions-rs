@@ -2,84 +2,71 @@ use core::{Distribution, DefaultDistribution, IntoDistribution};
 
 use std::ops::{RangeFull};
 use std::marker;
+use std::mem;
+
 use rand::Rng;
+use num::PrimInt;
 
 pub struct Uniform<T> (marker::PhantomData<fn() -> T>);
 
-impl <T> Uniform<T> where Uniform<T>: Distribution<Output=T> {
+trait DowncastPrimitiveInteger: PrimInt {
+    fn from_u32(u: u32) -> Self;
+    fn from_u64(u: u64) -> Self;
+}
+
+impl <T> Uniform<T> {
     #[inline]
     pub fn new() -> Uniform<T> {
         Uniform(marker::PhantomData)
     }
 }
 
-impl <X> IntoDistribution<X> for RangeFull where
-    Uniform<X>: Distribution<Output=X>
+impl <T: DowncastPrimitiveInteger> IntoDistribution<T> for RangeFull
 {
-    type Distribution = Uniform<X>;
+    type Distribution = Uniform<T>;
 
     #[inline]
-    fn into_distribution(self) -> Uniform<X> {
+    fn into_distribution(self) -> Uniform<T> {
         Uniform::new()
     }
 }
 
-macro_rules! integer_size_impls {
-    ($mod_name:ident, $ty:ty, $ty32:ty, $ty64:ty) => {
-        mod $mod_name {
-            use super::Uniform;
-            use core::Distribution;
+impl <T: DowncastPrimitiveInteger> Distribution for Uniform<T>
+{
+    type Output = T;
 
-            use std::mem;
-            use rand::Rng;
-
-            impl Distribution for Uniform<$ty> {
-                type Output = $ty;
-
-                #[inline]
-                fn sample<R: Rng>(&self, rng: &mut R) -> $ty {
-                    if mem::size_of::<$ty>() == 4 {
-                        Uniform::<$ty32>::new().sample(rng) as $ty
-                    } else {
-                        Uniform::<$ty64>::new().sample(rng) as $ty
-                    }
-                }
-            }
+    #[inline]
+    fn sample<R: Rng>(&self, rng: &mut R) -> T {
+        if mem::size_of::<T>() <= 4 {
+            T::from_u32(rng.next_u32())
+        } else {
+            T::from_u64(rng.next_u64())
         }
     }
 }
-
-integer_size_impls! { isize_uniform_impls, isize, i32, i64 }
-integer_size_impls! { usize_uniform_impls, usize, u32, u64 }
 
 macro_rules! integer_impls {
-    ($mod_name:ident, $ty:ty, $method_name:ident) => {
-        mod $mod_name {
-            use super::Uniform;
-            use core::Distribution;
-
-            use rand::Rng;
-
-            impl Distribution for Uniform<$ty> {
-                type Output = $ty;
+    ($($ty:ty),*) => {
+        $(
+            impl DowncastPrimitiveInteger for $ty {
+                #[inline]
+                fn from_u32(u: u32) -> $ty {
+                    u as $ty
+                }
 
                 #[inline]
-                fn sample<R: Rng>(&self, rng: &mut R) -> $ty {
-                    rng.$method_name() as $ty
+                fn from_u64(u: u64) -> $ty {
+                    u as $ty
                 }
             }
-        }
+        )*
     }
 }
 
-integer_impls! { i8_uniform_impls,  i8,  next_u32 }
-integer_impls! { i16_uniform_impls, i16, next_u32 }
-integer_impls! { i32_uniform_impls, i32, next_u32 }
-integer_impls! { i64_uniform_impls, i64, next_u64 }
-integer_impls! { u8_uniform_impls,  u8,  next_u32 }
-integer_impls! { u16_uniform_impls, u16, next_u32 }
-integer_impls! { u32_uniform_impls, u32, next_u32 }
-integer_impls! { u64_uniform_impls, u64, next_u64 }
+integer_impls! {
+    i8, i16, i32, i64, isize,
+    u8, u16, u32, u64, usize
+}
 
 impl Distribution for Uniform<bool> {
     type Output = bool;
@@ -134,7 +121,7 @@ mod tests {
         let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
 
         let d = IntoDistribution::<u8>::into_distribution(RangeFull);
-        let _ = d.sample(&mut rng);
+        let _: u8 = d.sample(&mut rng);
     }
 
     #[test]
@@ -142,6 +129,6 @@ mod tests {
         let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
 
         let d: Uniform<u8> = (..).into_distribution();
-        let _ = d.sample(&mut rng);
+        let _: u8 = d.sample(&mut rng);
     }
 }
