@@ -22,6 +22,7 @@ pub trait RandomSimple {
     fn random<R: Rng>(rng: &mut R) -> Self;
 }
 
+#[derive(Copy, Clone)]
 pub struct RandomSimpleDistribution<T>(marker::PhantomData<fn() -> T>);
 
 impl <T> RandomSimpleDistribution<T> where T: RandomSimple {

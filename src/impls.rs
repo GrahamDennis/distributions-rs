@@ -18,6 +18,7 @@ use std;
 ///     assert_eq!(v, 42);
 /// # }
 /// ```
+#[derive(Copy, Clone)]
 pub struct Constant<T>(pub T);
 
 impl<T: Clone> Distribution for Constant<T> {

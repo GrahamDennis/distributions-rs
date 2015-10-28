@@ -13,6 +13,7 @@ trait PrimitiveInteger: PrimInt {
     fn from_unsigned(u: <Self as PrimitiveInteger>::Unsigned) -> Self;
 }
 
+#[derive(Copy, Clone)]
 pub struct UniformPrimitiveIntegerRange<T> {
     low: T,
     range: T,

@@ -7,6 +7,7 @@ use std::mem;
 use rand::Rng;
 use num::PrimInt;
 
+#[derive(Copy, Clone)]
 pub struct Uniform<T> (marker::PhantomData<fn() -> T>);
 
 trait DowncastPrimitiveInteger: PrimInt {
