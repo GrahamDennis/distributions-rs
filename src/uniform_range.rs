@@ -2,7 +2,7 @@ use core::{Distribution, IntoDistribution};
 use uniform::Uniform;
 
 use std::ops::{Range, Add, Sub};
-use std::num::Wrapping as w;
+use std::num::Wrapping;
 use rand::Rng;
 use num::{Bounded, PrimInt};
 
@@ -22,13 +22,12 @@ pub struct UniformPrimitiveIntegerRange<T> {
 }
 
 impl <T: PrimitiveInteger> UniformPrimitiveIntegerRange<T> where
-    w<T::Unsigned>: Sub<Output=w<T::Unsigned>> + Add<Output=w<T::Unsigned>>,
-    Uniform<T>: Distribution<Output=T>
+    Wrapping<T::Unsigned>: Sub<Output=Wrapping<T::Unsigned>>
 {
     #[inline]
     fn new(low: T, high: T) -> UniformPrimitiveIntegerRange<T> {
         assert!(low < high);
-        let unsigned_range = (w(high.to_unsigned()) - w(low.to_unsigned())).0;
+        let unsigned_range = (Wrapping(high.to_unsigned()) - Wrapping(low.to_unsigned())).0;
         let unsigned_max: T::Unsigned = Bounded::max_value();
         let unsigned_zone = unsigned_max - (unsigned_max % unsigned_range);
 
@@ -42,8 +41,8 @@ impl <T: PrimitiveInteger> UniformPrimitiveIntegerRange<T> where
 }
 
 impl <T: PrimitiveInteger> IntoDistribution<T> for Range<T> where
-    w<T::Unsigned>: Sub<Output=w<T::Unsigned>> + Add<Output=w<T::Unsigned>>,
-    Uniform<T>: Distribution<Output=T>
+    Wrapping<T::Unsigned>: Sub<Output=Wrapping<T::Unsigned>>,
+    UniformPrimitiveIntegerRange<T>: Distribution<Output=T>
 {
     type Distribution = UniformPrimitiveIntegerRange<T>;
 
@@ -54,7 +53,7 @@ impl <T: PrimitiveInteger> IntoDistribution<T> for Range<T> where
 }
 
 impl <T: PrimitiveInteger> Distribution for UniformPrimitiveIntegerRange<T> where
-    w<T::Unsigned>: Sub<Output=w<T::Unsigned>> + Add<Output=w<T::Unsigned>>,
+    Wrapping<T::Unsigned>: Add<Output=Wrapping<T::Unsigned>>,
     Uniform<T>: Distribution<Output=T>
 {
     type Output = T;
@@ -66,8 +65,8 @@ impl <T: PrimitiveInteger> Distribution for UniformPrimitiveIntegerRange<T> wher
 
             if v < (self.accept_zone.to_unsigned()) {
                 return T::from_unsigned((
-                    w(self.low.to_unsigned()) +
-                    w(v % self.range.to_unsigned())
+                    Wrapping(self.low.to_unsigned()) +
+                    Wrapping(v % self.range.to_unsigned())
                 ).0);
             }
         }

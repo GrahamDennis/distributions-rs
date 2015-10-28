@@ -22,7 +22,8 @@ impl <T> Uniform<T> {
     }
 }
 
-impl <T: DowncastPrimitiveInteger> IntoDistribution<T> for RangeFull
+impl <T> IntoDistribution<T> for RangeFull where
+    Uniform<T>: Distribution<Output=T>
 {
     type Distribution = Uniform<T>;
 
