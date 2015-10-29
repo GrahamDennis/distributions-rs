@@ -7,7 +7,7 @@ mod impls;
 mod rng_ext;
 pub use core::{Distribution, DefaultDistribution, IntoDistribution};
 pub use random::{Random, RandomSimple, RandomSimpleDistribution};
-pub use impls::{Constant};
+pub use impls::{Constant, WeightedBool, RandomElement};
 pub use rng_ext::RngExt;
 pub mod uniform;
 pub mod uniform_range;

@@ -21,40 +21,43 @@ pub struct UniformPrimitiveIntegerRange<T> {
     base_distribution: Uniform<T>
 }
 
-impl <T: PrimitiveInteger> UniformPrimitiveIntegerRange<T> where
-    Wrapping<T::Unsigned>: Sub<Output=Wrapping<T::Unsigned>>
+impl <T: PrimitiveInteger> UniformPrimitiveIntegerRange<T>
+    where   Wrapping<T::Unsigned>: Sub<Output=Wrapping<T::Unsigned>>
 {
     #[inline]
-    fn new(low: T, high: T) -> UniformPrimitiveIntegerRange<T> {
-        assert!(low < high);
-        let unsigned_range = (Wrapping(high.to_unsigned()) - Wrapping(low.to_unsigned())).0;
-        let unsigned_max: T::Unsigned = Bounded::max_value();
-        let unsigned_zone = unsigned_max - (unsigned_max % unsigned_range);
+    pub fn new(low: T, high: T) -> Option<UniformPrimitiveIntegerRange<T>> {
+        if !(low < high) {
+            None
+        } else {
+            let unsigned_range = (Wrapping(high.to_unsigned()) - Wrapping(low.to_unsigned())).0;
+            let unsigned_max: T::Unsigned = Bounded::max_value();
+            let unsigned_zone = unsigned_max - (unsigned_max % unsigned_range);
 
-        UniformPrimitiveIntegerRange {
-            low: low,
-            range: T::from_unsigned(unsigned_range),
-            accept_zone: T::from_unsigned(unsigned_zone),
-            base_distribution: Uniform::new()
+            Some(UniformPrimitiveIntegerRange {
+                low: low,
+                range: T::from_unsigned(unsigned_range),
+                accept_zone: T::from_unsigned(unsigned_zone),
+                base_distribution: Uniform::new()
+            })
         }
     }
 }
 
-impl <T: PrimitiveInteger> IntoDistribution<T> for Range<T> where
-    Wrapping<T::Unsigned>: Sub<Output=Wrapping<T::Unsigned>>,
-    UniformPrimitiveIntegerRange<T>: Distribution<Output=T>
+impl <T: PrimitiveInteger> IntoDistribution<T> for Range<T>
+    where   Wrapping<T::Unsigned>: Sub<Output=Wrapping<T::Unsigned>>,
+            UniformPrimitiveIntegerRange<T>: Distribution<Output=T>
 {
     type Distribution = UniformPrimitiveIntegerRange<T>;
 
     #[inline]
     fn into_distribution(self) -> UniformPrimitiveIntegerRange<T> {
-        UniformPrimitiveIntegerRange::new(self.start, self.end)
+        UniformPrimitiveIntegerRange::new(self.start, self.end).unwrap()
     }
 }
 
-impl <T: PrimitiveInteger> Distribution for UniformPrimitiveIntegerRange<T> where
-    Wrapping<T::Unsigned>: Add<Output=Wrapping<T::Unsigned>>,
-    Uniform<T>: Distribution<Output=T>
+impl <T: PrimitiveInteger> Distribution for UniformPrimitiveIntegerRange<T>
+    where   Wrapping<T::Unsigned>: Add<Output=Wrapping<T::Unsigned>>,
+            Uniform<T>: Distribution<Output=T>
 {
     type Output = T;
 
@@ -116,16 +119,16 @@ mod tests {
 
     use rand::{self, thread_rng, Rng};
 
-    #[should_panic]
     #[test]
     fn test_range_bad_limits_equal() {
-        UniformPrimitiveIntegerRange::new(10, 10);
+        let d = UniformPrimitiveIntegerRange::new(10, 10);
+        assert!(d.is_none());
     }
 
-    #[should_panic]
     #[test]
     fn test_range_bad_limits_flipped() {
-        UniformPrimitiveIntegerRange::new(10, 5);
+        let d = UniformPrimitiveIntegerRange::new(10, 5);
+        assert!(d.is_none());
     }
 
     #[test]

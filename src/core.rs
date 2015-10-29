@@ -14,12 +14,27 @@ pub trait Distribution {
 
 // An impl for a reference to a distribution because 'gen' and 'gen_iter' above consume
 // distributions.  This way you can pass a reference to a distribution to 'gen' and 'gen_iter'.
-impl <'a, D> Distribution for &'a D where D: Distribution {
+impl <'a, D: Distribution> Distribution for &'a D
+{
     type Output = <D as Distribution>::Output;
 
     #[inline]
     fn sample<R: Rng>(&self, rng: &mut R) -> <Self as Distribution>::Output {
         (*self).sample(rng)
+    }
+}
+
+// Allow an Option<Distribution> to be treated as a distribution yielding Option<Output>
+impl <D: Distribution> Distribution for Option<D>
+{
+    type Output = Option<<D as Distribution>::Output>;
+
+    #[inline]
+    fn sample<R: Rng>(&self, rng: &mut R) -> Option<<D as Distribution>::Output> {
+        match *self {
+            Some(ref d) => Some(d.sample(rng)),
+            None => None
+        }
     }
 }
 
@@ -45,8 +60,8 @@ pub trait IntoDistribution<T>: Sized {
     fn into_distribution(self) -> <Self as IntoDistribution<T>>::Distribution;
 }
 
-impl <D, T> IntoDistribution<T> for D where
-    D: Distribution<Output=T>
+impl <D, T> IntoDistribution<T> for D
+    where   D: Distribution<Output=T>
 {
     type Distribution = D;
 

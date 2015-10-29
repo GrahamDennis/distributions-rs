@@ -25,7 +25,7 @@ pub trait RandomSimple {
 #[derive(Copy, Clone)]
 pub struct RandomSimpleDistribution<T>(marker::PhantomData<fn() -> T>);
 
-impl <T> RandomSimpleDistribution<T> where T: RandomSimple {
+impl <T: RandomSimple> RandomSimpleDistribution<T> {
     #[inline]
     pub fn new() -> RandomSimpleDistribution<T> {
         RandomSimpleDistribution(marker::PhantomData)

@@ -22,8 +22,8 @@ impl <T> Uniform<T> {
     }
 }
 
-impl <T> IntoDistribution<T> for RangeFull where
-    Uniform<T>: Distribution<Output=T>
+impl <T> IntoDistribution<T> for RangeFull
+    where Uniform<T>: Distribution<Output=T>
 {
     type Distribution = Uniform<T>;
 
