@@ -129,12 +129,44 @@ impl <'a, T> Distribution for RandomElement<'a, T> {
     }
 }
 
+impl <'a, T: 'a> IntoDistribution<&'a T> for &'a [T] {
+    type Distribution = RandomElement<'a, T>;
+
+    #[inline]
+    fn into_distribution(self) -> RandomElement<'a, T> {
+        RandomElement::new(self).unwrap()
+    }
+}
+
+pub struct Alphanum(RandomElement<'static, u8>);
+
+impl Alphanum {
+    #[inline]
+    pub fn new() -> Alphanum {
+        const GEN_ASCII_STR_CHARSET: &'static [u8] =
+            b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+              abcdefghijklmnopqrstuvwxyz\
+              0123456789";
+        Alphanum(RandomElement::new(GEN_ASCII_STR_CHARSET).unwrap())
+    }
+}
+
+impl Distribution for Alphanum {
+    type Output = char;
+
+    #[inline]
+    fn sample<R: Rng>(&self, r: &mut R) -> char {
+        *self.0.sample(r) as char
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use core::{Distribution, IntoDistribution};
     use rand::{self, Rng, thread_rng};
+    use rng_ext::RngExt;
 
     fn create_rng() -> rand::XorShiftRng {
         rand::thread_rng().gen()
@@ -182,5 +214,13 @@ mod tests {
         let s = d.sample(&mut rng);
 
         assert_eq!(s, None);
+    }
+
+    #[test]
+    fn test_alphanum() {
+        let mut rng = create_rng();
+
+        let d = Alphanum::new();
+        let _: String = rng.generate_iter(&d).take(100).collect();
     }
 }

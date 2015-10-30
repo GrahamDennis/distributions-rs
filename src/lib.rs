@@ -5,12 +5,15 @@ mod core;
 mod random;
 mod impls;
 mod rng_ext;
+mod uniform;
+mod uniform_range;
+
 pub use core::{Distribution, DefaultDistribution, IntoDistribution};
 pub use random::{Random, RandomSimple, RandomSimpleDistribution};
-pub use impls::{Constant, WeightedBool, RandomElement};
+pub use impls::{Constant, WeightedBool, RandomElement, Alphanum};
 pub use rng_ext::RngExt;
-pub mod uniform;
-pub mod uniform_range;
+pub use uniform::Uniform;
+pub use uniform_range::UniformPrimitiveIntegerRange;
 
 
 #[cfg(test)]

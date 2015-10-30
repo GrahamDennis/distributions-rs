@@ -70,9 +70,13 @@ mod tests {
 
     random_simple_to_default_distribution! { MyType }
 
+    fn create_rng() -> rand::XorShiftRng {
+        rand::thread_rng().gen()
+    }
+
     #[test]
     fn test_generate_u8() {
-        let mut rng: rand::XorShiftRng = rand::thread_rng().gen();
+        let mut rng = create_rng();
 
         let d = MyType::default_distribution();
         let _: MyType =  d.sample(&mut rng);
