@@ -86,7 +86,7 @@ impl WeightedBool {
         if n <= 1 {
             WeightedBool::AlwaysTrue
         } else {
-            WeightedBool::OneIn(UniformPrimitiveIntegerRange::new(0, n).unwrap())
+            WeightedBool::OneIn(UniformPrimitiveIntegerRange::new(0, n))
         }
     }
 }
@@ -110,11 +110,11 @@ pub struct RandomElement<'a, T: 'a> {
 
 impl <'a, T> RandomElement<'a, T> {
     #[inline]
-    pub fn new(values: &'a [T]) -> Option<RandomElement<'a, T>> {
+    pub fn from(values: &'a [T]) -> Option<RandomElement<'a, T>> {
         if values.len() == 0 {
             None
         } else {
-            let range_distribution = UniformPrimitiveIntegerRange::new(0, values.len()).unwrap();
+            let range_distribution = UniformPrimitiveIntegerRange::new(0, values.len());
             Some(RandomElement { values: values, range: range_distribution })
         }
     }
@@ -134,7 +134,7 @@ impl <'a, T: 'a> IntoDistribution<&'a T> for &'a [T] {
 
     #[inline]
     fn into_distribution(self) -> RandomElement<'a, T> {
-        RandomElement::new(self).unwrap()
+        RandomElement::from(self).expect("Tried to convert an empty slice into a `Distribution`")
     }
 }
 
@@ -147,7 +147,7 @@ impl Alphanum {
             b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
               abcdefghijklmnopqrstuvwxyz\
               0123456789";
-        Alphanum(RandomElement::new(GEN_ASCII_STR_CHARSET).unwrap())
+        Alphanum(RandomElement::from(GEN_ASCII_STR_CHARSET).unwrap())
     }
 }
 
@@ -210,7 +210,7 @@ mod tests {
         let mut rng = create_rng();
 
         let v: Vec<usize> = vec![];
-        let d = RandomElement::new(&v);
+        let d = RandomElement::from(&v);
         let s = d.sample(&mut rng);
 
         assert_eq!(s, None);

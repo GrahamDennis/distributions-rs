@@ -25,20 +25,17 @@ impl <T: PrimitiveInteger> UniformPrimitiveIntegerRange<T>
     where   Wrapping<T::Unsigned>: Sub<Output=Wrapping<T::Unsigned>>
 {
     #[inline]
-    pub fn new(low: T, high: T) -> Option<UniformPrimitiveIntegerRange<T>> {
-        if !(low < high) {
-            None
-        } else {
-            let unsigned_range = (Wrapping(high.to_unsigned()) - Wrapping(low.to_unsigned())).0;
-            let unsigned_max: T::Unsigned = Bounded::max_value();
-            let unsigned_zone = unsigned_max - (unsigned_max % unsigned_range);
+    pub fn new(low: T, high: T) -> UniformPrimitiveIntegerRange<T> {
+        assert!(low < high, "UniformPrimitiveIntegerRange::new called with `low >= high`");
+        let unsigned_range = (Wrapping(high.to_unsigned()) - Wrapping(low.to_unsigned())).0;
+        let unsigned_max: T::Unsigned = Bounded::max_value();
+        let unsigned_zone = unsigned_max - (unsigned_max % unsigned_range);
 
-            Some(UniformPrimitiveIntegerRange {
-                low: low,
-                range: T::from_unsigned(unsigned_range),
-                accept_zone: T::from_unsigned(unsigned_zone),
-                base_distribution: Uniform::new()
-            })
+        UniformPrimitiveIntegerRange {
+            low: low,
+            range: T::from_unsigned(unsigned_range),
+            accept_zone: T::from_unsigned(unsigned_zone),
+            base_distribution: Uniform::new()
         }
     }
 }
@@ -51,7 +48,7 @@ impl <T: PrimitiveInteger> IntoDistribution<T> for Range<T>
 
     #[inline]
     fn into_distribution(self) -> UniformPrimitiveIntegerRange<T> {
-        UniformPrimitiveIntegerRange::new(self.start, self.end).unwrap()
+        UniformPrimitiveIntegerRange::new(self.start, self.end)
     }
 }
 
@@ -119,16 +116,16 @@ mod tests {
 
     use rand::{self, thread_rng, Rng};
 
+    #[should_panic]
     #[test]
     fn test_range_bad_limits_equal() {
-        let d = UniformPrimitiveIntegerRange::new(10, 10);
-        assert!(d.is_none());
+        UniformPrimitiveIntegerRange::new(10, 10);
     }
 
+    #[should_panic]
     #[test]
     fn test_range_bad_limits_flipped() {
-        let d = UniformPrimitiveIntegerRange::new(10, 5);
-        assert!(d.is_none());
+        UniformPrimitiveIntegerRange::new(10, 5);
     }
 
     #[test]
