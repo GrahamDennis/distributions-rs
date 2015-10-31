@@ -1,6 +1,6 @@
 [package]
 name = "rand-distributions"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Graham Dennis <graham.dennis@gmail.com>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
