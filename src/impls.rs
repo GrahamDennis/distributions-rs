@@ -10,11 +10,11 @@ use std;
 ///
 /// ```rust
 /// # extern crate rand;
-/// # extern crate distributions;
+/// # extern crate rand_distributions;
 /// # fn main() {
-///     use distributions::Distribution;
+///     use rand_distributions::Distribution;
 ///
-///     let d = distributions::Constant(42);
+///     let d = rand_distributions::Constant(42);
 ///     let v = d.sample(&mut rand::thread_rng());
 ///     assert_eq!(v, 42);
 /// # }
