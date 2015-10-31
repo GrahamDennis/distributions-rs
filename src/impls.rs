@@ -81,7 +81,6 @@ pub enum WeightedBool {
 }
 
 impl WeightedBool {
-    #[inline]
     pub fn new(n: u32) -> WeightedBool {
         if n <= 1 {
             WeightedBool::AlwaysTrue
@@ -109,7 +108,6 @@ pub struct RandomElement<'a, T: 'a> {
 }
 
 impl <'a, T> RandomElement<'a, T> {
-    #[inline]
     pub fn from(values: &'a [T]) -> Option<RandomElement<'a, T>> {
         if values.len() == 0 {
             None
@@ -141,7 +139,6 @@ impl <'a, T: 'a> IntoDistribution<&'a T> for &'a [T] {
 pub struct Alphanum(RandomElement<'static, u8>);
 
 impl Alphanum {
-    #[inline]
     pub fn new() -> Alphanum {
         const GEN_ASCII_STR_CHARSET: &'static [u8] =
             b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
